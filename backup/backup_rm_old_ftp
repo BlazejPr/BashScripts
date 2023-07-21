@@ -15,7 +15,7 @@ FILE_RAW2='/var/local/dir2'
 FILE2="/home/userx/var_local_kopie_syno.$XDATE.tar.gz"
 
 
-#zrzut z listy plikow na serwerze
+
 OUTFILE="/tmp/ftplist.1.txt"
 CMDFILE="/tmp/ftpcmd.1.txt"
 ndays=14
@@ -30,10 +30,9 @@ rm $FILE2
 
 
 
-echo "pakuje..."
-##tar -cvf $FILE $FILE_RAW
-echo "pakuje 2222.... "
-##tar -cvf $FILE2 $FILE_RAW2
+
+tar -cvf $FILE $FILE_RAW
+tar -cvf $FILE2 $FILE_RAW2
 
 
 TDATE=`date --date="$ndays days ago" +%Y%m%d`
