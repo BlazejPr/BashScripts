@@ -1,0 +1,120 @@
+#!/bin/bash
+HOST='serwer.x.pl'
+USER='userx.pl'
+PASSWD='13wewfsdfdfdfsdf'
+
+DIR="FTP"
+
+XDATE=`date += %Y_%m_%d`
+
+
+FILE_RAW='/var/local/dir1'
+FILE="/home/userx/var_local_kopie2_syno.$XDATE.tar.gz"
+
+FILE_RAW2='/var/local/dir2'
+FILE2="/home/userx/var_local_kopie_syno.$XDATE.tar.gz"
+
+
+#zrzut z listy plikow na serwerze
+OUTFILE="/tmp/ftplist.1.txt"
+CMDFILE="/tmp/ftpcmd.1.txt"
+ndays=14
+
+
+rm -f $OUTFILE $CMDFILE
+
+
+#usun stare archiwa...
+rm $FILE
+rm $FILE2
+
+
+
+echo "pakuje..."
+##tar -cvf $FILE $FILE_RAW
+echo "pakuje 2222.... "
+##tar -cvf $FILE2 $FILE_RAW2
+
+
+TDATE=`date --date="$ndays days ago" +%Y%m%d`
+
+
+echo "................"
+ftp -n $HOST <<END_SCRIPT
+quote USER $USER
+quote PASS $PASSWD
+pwd
+cd $FTP
+pwd
+ls -l $OUTFILE
+bin
+put $FILE
+put $FILE2
+quit
+END_SCRIPT
+echo "................."
+
+echo "quote USER $USER" >> $CMDFILE
+echo "quote PASS $PASSWD" >> $CMDFILE
+echo "cd $FTP" >> $CMDFILE
+
+
+
+
+if [ -f "$OUTFILE" ]
+then
+
+    lista=($(<$OUTFILE))
+
+
+    COUNT=0
+
+    for ((FNO=2; FNO<${#lista[@]}; FNO+=9));do
+
+        # month (element 5), day (element 6) and filename (element 8)
+        FMM=${lista[`expr $FNO+5`]}
+        FDD=${lista[`expr $FNO+6`]}
+        FYY=${lista[`expr $FNO+7`]}
+
+        if [[ $FYY == *\:* ]]
+        then
+            FDATE=`date -d "$FMM $FDD" +'%Y%m%d'`
+        else
+            FDATE=`date -d "$FMM $FDD $FYY" +'%Y%m%d'`
+        fi
+
+
+        # echo $FDATE
+        # check the date stamp
+        if [[ $FDATE -lt $TDATE ]];
+        then
+            echo "Deleting ${lista[`expr $FNO+8`]}"
+            echo "delete ${lista[`expr $FNO+8`]}" >> $CMDFILE
+            COUNT=$[$COUNT + 1]
+        fi
+
+ 
+    done
+ 
+    echo "quit" >> $CMDFILE
+    echo $COUNT
+
+
+    if [[ $COUNT -gt 0 ]];
+    then
+cat $CMDFILE | tr -d "\r" > $CMDFILE
+        ftp -i -n $HOST < $CMDFILE > /dev/null
+    else
+        echo "Nothing to delete"
+    fi
+
+    rm -f $OUTFILE $CMDFILE
+
+
+fi
+
+
+
+
+
+
